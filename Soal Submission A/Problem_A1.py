@@ -20,6 +20,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
+
 def solution_A1():
     # DO NOT CHANGE THIS CODE
     X = np.array([-4.0, -3.0, -2.0, -1.0, 0.0, 1.0,
@@ -27,12 +28,7 @@ def solution_A1():
     Y = np.array([5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0,
                  12.0, 13.0, 14.0, ], dtype=float)
 
-    model = tf.keras.Sequential([
-        keras.layers.Dense(1, input_shape=[1], activation='linear')
-    ])
-
-    model.compile(optimizer=tf.keras.optimizers.SGD(), loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(X, Y, epochs=500)
+    # YOUR CODE HERE
 
     print(model.predict([-2.0, 10.0]))
     return model

@@ -28,12 +28,14 @@ def solution_A3():
         inceptionv3, 'inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5')
     local_weights_file = 'inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
-    pre_trained_model =  # YOUR CODE HERE
+    pre_trained_model = InceptionV3(input_shape=(150, 150, 3), include_top=False, weights=None)
+    pre_trained_model.load_weights(local_weights_file)
 
     for layer in pre_trained_model.layers:
         layer.trainable = False
 
-    last_layer =  # YOUR CODE HERE
+    last_layer = pre_trained_model.get_layer('mixed7')
+    last_output = last_layer.output
 
     data_url_1 = 'https://github.com/dicodingacademy/assets/releases/download/release-horse-or-human/horse-or-human.zip'
     urllib.request.urlretrieve(data_url_1, 'horse-or-human.zip')
@@ -52,20 +54,42 @@ def solution_A3():
     train_dir = 'data/horse-or-human'
     validation_dir = 'data/validation-horse-or-human'
 
-    train_datagen = ImageDataGenerator(
-        # YOUR CODE HERE
+    train_datagen = ImageDataGenerator(rescale=1. / 255.,
+                                       rotation_range=40,
+                                       width_shift_range=0.2,
+                                       height_shift_range=0.2,
+                                       shear_range=0.2,
+                                       zoom_range=0.2,
+                                       horizontal_flip=True)
+
+    validation_datagen = ImageDataGenerator(rescale=1.0 / 255.)
 
     # YOUR IMAGE SIZE SHOULD BE 150x150
-    train_generator=  # YOUR CODE HERE
+    train_generator = train_datagen.flow_from_directory(directory=train_dir,
+                                                        batch_size=32,
+                                                        class_mode='binary',
+                                                        target_size=(150, 150))
 
-    x =  # YOUR CODE HERE, BUT END WITH A Neuron Dense, activated by sigmoid
+    validation_generator = validation_datagen.flow_from_directory(directory=validation_dir,
+                                                                  batch_size=32,
+                                                                  class_mode='binary',
+                                                                  target_size=(150, 150))
+
+    x = layers.Flatten()(last_output)
+    x = layers.Dense(1024, activation='relu')(x)
+    x = layers.Dropout(0.2)(x)
     x = layers.Dense(1, activation='sigmoid')(x)
 
     model = Model(pre_trained_model.input, x)
 
-    model.compile(optimizer=RMSprop(lr=0.0001),
+    model.compile(optimizer=RMSprop(learning_rate=0.0001),
                   loss='binary_crossentropy',
                   metrics=['acc'])
+
+    model.fit(train_generator,
+              epochs=10,
+              validation_data=validation_generator,
+              verbose=1)
 
     return model
 

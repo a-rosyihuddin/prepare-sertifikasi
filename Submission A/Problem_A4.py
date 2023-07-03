@@ -19,7 +19,14 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 def solution_A4():
     imdb, info = tfds.load("imdb_reviews", with_info=True, as_supervised=True)
-    # YOUR CODE HERE
+    train_data, test_data = imdb['train'], imdb['test']
+
+    # Initialize sentences and labels lists
+    training_sentences = []
+    training_labels = []
+
+    testing_sentences = []
+    testing_labels = []
 
     # DO NOT CHANGE THIS CODE
     for s, l in train_data:
@@ -30,7 +37,8 @@ def solution_A4():
         testing_sentences.append(s.numpy().decode('utf8'))
         testing_labels.append(l.numpy())
 
-    # YOUR CODE HERE
+    training_labels_final = np.array(training_labels)
+    testing_labels_final = np.array(testing_labels)
 
     # DO NOT CHANGE THIS CODE
     # Make sure you used all of these parameters or test may fail
@@ -41,12 +49,35 @@ def solution_A4():
     oov_tok = "<OOV>"
 
     # Fit your tokenizer with training data
-    tokenizer =  # YOUR CODE HERE
+    tokenizer = Tokenizer(num_words=vocab_size, oov_token=oov_tok)
+
+    # Generate the word index dictionary for the training sentences
+    tokenizer.fit_on_texts(training_sentences)
+    word_index = tokenizer.word_index
+
+    # Generate and pad the training sequences
+    sequences = tokenizer.texts_to_sequences(training_sentences)
+    padded = pad_sequences(sequences, maxlen=max_length, truncating=trunc_type)
+
+    # Generate and pad the test sequences
+    testing_sequences = tokenizer.texts_to_sequences(testing_sentences)
+    testing_padded = pad_sequences(testing_sequences, maxlen=max_length)
 
     model = tf.keras.Sequential([
-        # YOUR CODE HERE. Do not change the last layer.
+        tf.keras.layers.Embedding(vocab_size, embedding_dim, input_length=max_length),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(16, activation='relu'),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
+
+    # Set the training parameters
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    model.fit(padded,
+              training_labels_final,
+              batch_size=128,
+              epochs=10,
+              validation_data=(testing_padded, testing_labels_final))
 
     return model
 

@@ -34,16 +34,41 @@ def solution_A2():
     zip_ref.close()
 
     TRAINING_DIR = 'data/horse-or-human'
-    train_datagen = ImageDataGenerator(
-        # YOUR CODE HERE)
+    VALIDATION_DIR = 'data/validation-horse-or-human'
+    train_datagen = ImageDataGenerator(rescale=1.0 / 255.)
+
+    val_datagen = ImageDataGenerator(rescale=1.0 / 255.)
 
     # YOUR IMAGE SIZE SHOULD BE 150x150
-    train_generator=# YOUR CODE HERE
+    train_generator = train_datagen.flow_from_directory(directory=TRAINING_DIR,
+                                                        batch_size=32,
+                                                        class_mode='binary',
+                                                        target_size=(150, 150))
 
-    model=tf.keras.models.Sequential([
-        # YOUR CODE HERE, end with a Neuron Dense, activated by sigmoid
-                tf.keras.layers.Dense(1, activation='sigmoid')
-        ])
+    val_generator = val_datagen.flow_from_directory(directory=VALIDATION_DIR,
+                                                    batch_size=32,
+                                                    class_mode='binary',
+                                                    target_size=(150, 150))
+
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(150, 150, 3)),
+        tf.keras.layers.MaxPooling2D(2, 2),
+        tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        tf.keras.layers.MaxPooling2D(2, 2),
+        tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
+        tf.keras.layers.MaxPooling2D(2, 2),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(512, activation='relu'),
+        tf.keras.layers.Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(optimizer=RMSprop(learning_rate=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
+
+    model.fit(train_generator,
+              epochs=10,
+              validation_data=val_generator,
+              verbose=1)
 
     return model
 
